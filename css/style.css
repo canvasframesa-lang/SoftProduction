@@ -479,3 +479,42 @@ body {
     font-size: 14px;
     color: var(--gold);
 }
+
+/* Rating Badge on Card */
+.rating-badge {
+    position: absolute;
+    bottom: 35px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    color: var(--gold);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Modal Rating */
+.modal-rating {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 8px;
+}
+
+.star {
+    color: #333;
+    font-size: 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.star.filled {
+    color: var(--gold);
+}
+
+.star:hover {
+    transform: scale(1.2);
+    color: var(--gold);
+}

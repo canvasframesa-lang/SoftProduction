@@ -22,12 +22,10 @@
     async loadData() {
         try {
             const data = await this.driveService.getAllProductsWithStats();
-            // تحويل البيانات إلى مصفوفة إذا كانت object
             let files = [];
             if (Array.isArray(data)) {
                 files = data;
             } else if (data && typeof data === 'object') {
-                // إذا كان object، نجمع كل الملفات من المجلدات
                 files = Object.values(data).flat();
             }
             
@@ -46,10 +44,7 @@
     }
 
     groupProducts(files) {
-        if (!files || !Array.isArray(files)) {
-            console.error('Invalid files data');
-            return [];
-        }
+        if (!files || !Array.isArray(files)) return [];
         
         const groups = {};
         files.forEach(file => {
@@ -171,7 +166,6 @@
         
         grid.innerHTML = this.filteredProducts.map(p => {
             const rating = this.ratings[p.code] || 0;
-            const stars = this.renderStars(rating, p.code, true);
             
             return `
                 <div class="product-card" onclick="app.viewProduct('${p.code}')">
@@ -179,24 +173,21 @@
                         <img src="${p.thumbnail}" alt="${p.code}" loading="lazy">
                         <span class="orientation-badge ${p.orientation}">${p.orientation}</span>
                         <span class="image-count">${p.imageCount} صور</span>
+                        ${rating > 0 ? `<span class="rating-badge">${'★'.repeat(rating)}</span>` : ''}
                     </div>
                     <div class="product-info">
                         <span class="product-code">${p.code}</span>
-                        <div class="product-rating" onclick="event.stopPropagation()">
-                            ${stars}
-                        </div>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    renderStars(rating, code, clickable = false) {
+    renderStars(rating, code) {
         let stars = '';
         for (let i = 1; i <= 5; i++) {
             const filled = i <= rating ? 'filled' : '';
-            const onclick = clickable ? `onclick="event.stopPropagation(); app.setRating('${code}', ${i})"` : '';
-            stars += `<span class="star ${filled}" ${onclick}>★</span>`;
+            stars += `<span class="star ${filled}" onclick="app.setRating('${code}', ${i})">★</span>`;
         }
         return stars;
     }
@@ -204,12 +195,15 @@
     setRating(code, rating) {
         this.ratings[code] = rating;
         localStorage.setItem('productRatings', JSON.stringify(this.ratings));
-        this.renderProducts();
         
+        // تحديث النجوم في المودال
         const modalRating = document.querySelector('.modal-rating');
         if (modalRating) {
-            modalRating.innerHTML = this.renderStars(rating, code, true);
+            modalRating.innerHTML = this.renderStars(rating, code);
         }
+        
+        // تحديث البطاقات
+        this.renderProducts();
     }
 
     viewProduct(code) {
@@ -231,7 +225,7 @@
             </div>
             
             <div class="modal-rating">
-                ${this.renderStars(rating, code, true)}
+                ${this.renderStars(rating, code)}
             </div>
             
             <div class="slider-container">
