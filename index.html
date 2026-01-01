@@ -7,8 +7,27 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Login Modal -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <img src="assets/logo.png" alt="Logo" class="login-logo">
+            <h2>تسجيل الدخول</h2>
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="اسم المستخدم" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="كلمة المرور" required>
+                </div>
+                <p class="error-msg" id="errorMsg"></p>
+                <button type="submit" class="login-btn">دخول</button>
+            </form>
+        </div>
+    </div>
+
     <nav class="navbar">
         <img src="assets/logo.png" alt="Logo" class="logo">
+        <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
     </nav>
 
     <main class="main-container">
@@ -40,7 +59,10 @@
         </section>
 
         <section class="categories-section">
-            <h2>الفئات</h2>
+            <div class="categories-header">
+                <h2>الفئات</h2>
+                <button class="print-btn" onclick="app.printReport()">📄 طباعة تقرير</button>
+            </div>
             <div class="categories-grid" id="categoriesGrid"></div>
         </section>
 
@@ -55,7 +77,6 @@
                 <option value="H">أفقي H</option>
                 <option value="S">مربع S</option>
             </select>
-            <button class="print-btn" onclick="app.printReport()">طباعة تقرير</button>
         </section>
 
         <section class="products-section">
@@ -72,5 +93,53 @@
     <script src="js/services/driveService.js"></script>
     <script src="js/services/telegramService.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        const users = [
+            { username: 'admin', password: 'admin123', role: 'admin' },
+            { username: 'user', password: 'user123', role: 'user' }
+        ];
+
+        function checkAuth() {
+            const loggedIn = localStorage.getItem('loggedIn');
+            if (!loggedIn) {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.querySelector('.main-container').style.display = 'none';
+                document.querySelector('.navbar').style.display = 'none';
+            } else {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.querySelector('.main-container').style.display = 'block';
+                document.querySelector('.navbar').style.display = 'flex';
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('username', user.username);
+                localStorage.setItem('role', user.role);
+                checkAuth();
+                location.reload();
+            } else {
+                errorMsg.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+            }
+            return false;
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            checkAuth();
+        }
+
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
 </body>
 </html>

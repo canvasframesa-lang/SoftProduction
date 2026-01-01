@@ -914,3 +914,20 @@ body {
     color: var(--text-primary);
     min-width: 150px;
 }
+
+/* Categories Header */
+.categories-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.categories-header h2 {
+    margin: 0;
+    color: var(--gold);
+}
+
+.categories-section {
+    padding: 20px;
+}
