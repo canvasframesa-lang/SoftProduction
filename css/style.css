@@ -660,3 +660,55 @@ body {
         font-size: 2rem;
     }
 }
+/* إضافة للـ Responsive */
+@media (max-width: 768px) {
+    .categories-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .category-card {
+        padding: 15px 10px;
+    }
+    
+    .category-card h3 {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .category-stats {
+        font-size: 0.65rem;
+        gap: 8px;
+    }
+    
+    .category-total {
+        font-size: 0.75rem;
+    }
+    
+    .stats-section {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 15px 8px;
+    }
+    
+    .stat-number {
+        font-size: 1.3rem;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stats-section {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
