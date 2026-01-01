@@ -14,7 +14,7 @@
             <h2>تسجيل الدخول</h2>
             <form id="loginForm" onsubmit="return handleLogin(event)">
                 <div class="input-group">
-                    <input type="text" id="username" placeholder="اسم المستخدم" required>
+                    <input type="text" id="username" placeholder="رقم الجوال" required>
                 </div>
                 <div class="input-group">
                     <input type="password" id="password" placeholder="كلمة المرور" required>
@@ -27,7 +27,10 @@
 
     <nav class="navbar">
         <img src="assets/logo.png" alt="Logo" class="logo">
-        <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
+        <div class="user-info">
+            <span id="welcomeUser"></span>
+            <button class="logout-btn" onclick="logout()">خروج</button>
+        </div>
     </nav>
 
     <main class="main-container">
@@ -59,7 +62,10 @@
         </section>
 
         <section class="categories-section">
-            <h2>الفئات</h2>
+            <div class="categories-header">
+                <h2>الفئات</h2>
+                <button class="print-btn" onclick="app.printReport()">📄 طباعة تقرير</button>
+            </div>
             <div class="categories-grid" id="categoriesGrid"></div>
         </section>
 
@@ -74,7 +80,6 @@
                 <option value="H">أفقي H</option>
                 <option value="S">مربع S</option>
             </select>
-            <button class="print-btn" onclick="app.printReport()">📄 طباعة تقرير</button>
         </section>
 
         <section class="products-section">
@@ -92,15 +97,14 @@
     <script src="js/services/telegramService.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // بيانات المستخدمين
         const users = [
-            { username: 'admin', password: 'admin123', role: 'admin' },
-            { username: 'user', password: 'user123', role: 'user' }
+            { username: '0550047481', password: 'Admin123', name: 'عبدالرحمن', role: 'admin' }
         ];
 
-        // تحقق من تسجيل الدخول
         function checkAuth() {
             const loggedIn = localStorage.getItem('loggedIn');
+            const userName = localStorage.getItem('userName');
+            
             if (!loggedIn) {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.querySelector('.main-container').style.display = 'none';
@@ -109,10 +113,10 @@
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.querySelector('.main-container').style.display = 'block';
                 document.querySelector('.navbar').style.display = 'flex';
+                document.getElementById('welcomeUser').textContent = 'مرحباً ' + userName;
             }
         }
 
-        // تسجيل الدخول
         function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -123,25 +127,23 @@
             
             if (user) {
                 localStorage.setItem('loggedIn', 'true');
-                localStorage.setItem('username', user.username);
-                localStorage.setItem('role', user.role);
+                localStorage.setItem('userName', user.name);
+                localStorage.setItem('userRole', user.role);
                 checkAuth();
                 location.reload();
             } else {
-                errorMsg.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+                errorMsg.textContent = 'رقم الجوال أو كلمة المرور غير صحيحة';
             }
             return false;
         }
 
-        // تسجيل الخروج
         function logout() {
             localStorage.removeItem('loggedIn');
-            localStorage.removeItem('username');
-            localStorage.removeItem('role');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
             checkAuth();
         }
 
-        // تشغيل عند تحميل الصفحة
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>

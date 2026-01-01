@@ -1042,3 +1042,31 @@ body {
     padding: 15px;
     border-radius: 12px;
 }
+
+/* User Info */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info span {
+    color: var(--gold);
+    font-size: 14px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background: #f5f5f5;
+    border-bottom: 1px solid var(--gold);
+}
+
+.navbar .logo {
+    height: 50px;
+    background: #fff;
+    padding: 5px 10px;
+    border-radius: 8px;
+}
