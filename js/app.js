@@ -4,13 +4,6 @@
         this.filteredProducts = [];
         this.categories = [];
         this.driveService = new DriveService();
-        this.categoryColors = [
-            { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: '#667eea' },
-            { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', border: '#f093fb' },
-            { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', border: '#4facfe' },
-            { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', border: '#43e97b' },
-            { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', border: '#fa709a' }
-        ];
     }
 
     async init() {
@@ -69,12 +62,15 @@
     renderCategories() {
         const grid = document.getElementById('categoriesGrid');
         if (!grid) return;
-        grid.innerHTML = this.categories.map((cat, i) => {
-            const color = this.categoryColors[i % this.categoryColors.length];
+        grid.innerHTML = this.categories.map((cat) => {
             const total = (cat.vCount || 0) + (cat.hCount || 0) + (cat.sCount || 0);
-            return `<div class="category-card" onclick="app.filterByCategory('${cat.name}')" style="background: ${color.bg}; border-color: ${color.border}">
+            return `<div class="category-card" onclick="app.filterByCategory('${cat.name}')">
                 <h3>${cat.name}</h3>
-                <div class="category-stats"><span>V: ${cat.vCount || 0}</span><span>H: ${cat.hCount || 0}</span><span>S: ${cat.sCount || 0}</span></div>
+                <div class="category-stats">
+                    <span>V: ${cat.vCount || 0}</span>
+                    <span>H: ${cat.hCount || 0}</span>
+                    <span>S: ${cat.sCount || 0}</span>
+                </div>
                 <div class="category-total">${total} لوحة</div>
             </div>`;
         }).join('');
