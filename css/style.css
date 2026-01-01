@@ -434,3 +434,48 @@ body {
 .print-card .stat-number {
     font-size: 1.5rem !important;
 }
+
+/* Rating Stars */
+.product-rating {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 5px;
+}
+
+.star {
+    color: #444;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.star.filled {
+    color: var(--gold);
+}
+
+.star:hover {
+    transform: scale(1.2);
+    color: var(--gold);
+}
+
+.modal-rating {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin: 15px 0;
+}
+
+.modal-rating .star {
+    font-size: 28px;
+}
+
+.product-info {
+    padding: 10px;
+    text-align: center;
+}
+
+.product-code {
+    font-size: 14px;
+    color: var(--gold);
+}
