@@ -21,7 +21,7 @@ body {
 }
 
 .navbar {
-    background: #000;
+    background: #f5f5f5;
     padding: 15px 40px;
     display: flex;
     justify-content: center;
@@ -432,3 +432,4 @@ body {
     .slider-thumbs .thumb { width: 40px; height: 40px; }
     .product-meta h2 { font-size: 1.2rem; }
 }
+
