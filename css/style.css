@@ -796,3 +796,37 @@ body {
         gap: 10px;
     }
 }
+
+/* Mobile Image Size Fix */
+@media (max-width: 768px) {
+    .main-image {
+        width: 100%;
+        padding: 0 10px;
+    }
+    
+    .main-image img {
+        width: 100%;
+        height: auto;
+        max-height: 45vh;
+        object-fit: contain;
+    }
+    
+    .modal-content {
+        padding: 15px;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .modal-rating .star {
+        font-size: 24px;
+    }
+    
+    .thumbnails {
+        max-height: 80px;
+    }
+    
+    .thumb {
+        width: 45px;
+        height: 45px;
+    }
+}
