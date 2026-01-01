@@ -98,8 +98,34 @@
     <script src="js/app.js"></script>
     <script>
         const users = [
-            { username: '0550047481', password: 'Admin123', name: 'عبدالرحمن', role: 'admin' }
+            { username: '0550047481', password: 'Admin123', name: 'عبدالرحمن', role: 'admin' },
+            { username: '0504142789', password: 'Admin321', name: 'أبو عمر', role: 'admin' },
+            { username: '0533996240', password: 'Admin213', name: 'عبدالحميد', role: 'admin' }
         ];
+
+        async function sendLoginNotification(userName, phone) {
+            try {
+                const token = CONFIG.TELEGRAM.BOT_TOKEN;
+                const chatId = CONFIG.TELEGRAM.CHAT_ID;
+                const url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+                
+                const msg = '🔐 تسجيل دخول جديد\n\n' +
+                            '👤 المستخدم: ' + userName + '\n' +
+                            '📱 رقم الجوال: ' + phone + '\n' +
+                            '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+                
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: msg
+                    })
+                });
+            } catch (error) {
+                console.error('Telegram error:', error);
+            }
+        }
 
         function checkAuth() {
             const loggedIn = localStorage.getItem('loggedIn');
@@ -117,7 +143,7 @@
             }
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -128,7 +154,12 @@
             if (user) {
                 localStorage.setItem('loggedIn', 'true');
                 localStorage.setItem('userName', user.name);
+                localStorage.setItem('userPhone', user.username);
                 localStorage.setItem('userRole', user.role);
+                
+                // إرسال إشعار تسجيل الدخول
+                await sendLoginNotification(user.name, user.username);
+                
                 checkAuth();
                 location.reload();
             } else {
@@ -140,6 +171,7 @@
         function logout() {
             localStorage.removeItem('loggedIn');
             localStorage.removeItem('userName');
+            localStorage.removeItem('userPhone');
             localStorage.removeItem('userRole');
             checkAuth();
         }
