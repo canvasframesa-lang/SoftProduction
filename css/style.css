@@ -1032,3 +1032,13 @@ body {
     font-size: 14px;
     min-height: 20px;
 }
+
+/* Login Logo White Background */
+.login-logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 30px;
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+}
