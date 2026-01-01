@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>كانفس فريم</title>
+    <title>Canvas Frame - معرض اللوحات</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,55 +11,58 @@
         <img src="assets/logo.png" alt="Logo" class="logo">
     </nav>
 
-    <div class="main-container">
+    <main class="main-container">
         <section class="stats-section">
-            <div class="stat-card clickable" onclick="app.showAll()">
+            <div class="stat-card" onclick="app.showAll()">
                 <span class="stat-number" id="totalProducts">0</span>
                 <span class="stat-label">إجمالي اللوحات</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="totalImages">0</span>
+                <span class="stat-label">إجمالي الصور</span>
             </div>
             <div class="stat-card">
                 <span class="stat-number" id="totalCategories">0</span>
                 <span class="stat-label">عدد الفئات</span>
             </div>
-            <div class="stat-card clickable" onclick="app.filterByOrientation('V')">
+            <div class="stat-card" onclick="app.filterByOrientation('V')">
                 <span class="stat-number" id="verticalCount">0</span>
-                <span class="stat-label">لوحات عمودية</span>
+                <span class="stat-label">عمودي V</span>
             </div>
-            <div class="stat-card clickable" onclick="app.filterByOrientation('H')">
+            <div class="stat-card" onclick="app.filterByOrientation('H')">
                 <span class="stat-number" id="horizontalCount">0</span>
-                <span class="stat-label">لوحات أفقية</span>
+                <span class="stat-label">أفقي H</span>
             </div>
-            <div class="stat-card clickable" onclick="app.filterByOrientation('S')">
+            <div class="stat-card" onclick="app.filterByOrientation('S')">
                 <span class="stat-number" id="squareCount">0</span>
-                <span class="stat-label">لوحات مربعة</span>
-            </div>
-            <div class="stat-card clickable print-card" onclick="app.printReport()">
-                <span class="stat-number">🖨️</span>
-                <span class="stat-label">طباعة تقرير</span>
+                <span class="stat-label">مربع S</span>
             </div>
         </section>
 
         <section class="categories-section">
-            <h2>إحصائيات الفئات</h2>
+            <h2>الفئات</h2>
             <div class="categories-grid" id="categoriesGrid"></div>
         </section>
 
         <section class="filters-section">
-            <input type="text" id="searchInput" placeholder="بحث بكود اللوحة...">
-            <select id="categoryFilter"><option value="">جميع الفئات</option></select>
+            <input type="text" id="searchInput" placeholder="بحث برمز اللوحة...">
+            <select id="categoryFilter">
+                <option value="">جميع الفئات</option>
+            </select>
             <select id="orientationFilter">
                 <option value="">جميع الاتجاهات</option>
-                <option value="V">عمودي</option>
-                <option value="H">أفقي</option>
-                <option value="S">مربع</option>
+                <option value="V">عمودي V</option>
+                <option value="H">أفقي H</option>
+                <option value="S">مربع S</option>
             </select>
+            <button class="print-btn" onclick="app.printReport()">طباعة تقرير</button>
         </section>
 
-        <section class="products-section" id="productsSection">
+        <section class="products-section">
             <h2>اللوحات <span id="productsCount">0</span></h2>
             <div class="products-grid" id="productsGrid"></div>
         </section>
-    </div>
+    </main>
 
     <div class="modal-overlay" id="productModal">
         <div class="modal-content" id="productModalContent"></div>
@@ -68,7 +71,6 @@
     <script src="js/config.js"></script>
     <script src="js/services/driveService.js"></script>
     <script src="js/services/telegramService.js"></script>
-    <script src="js/components/productCard.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
