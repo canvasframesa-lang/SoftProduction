@@ -155,28 +155,17 @@
         
         content.innerHTML = `
             <span class="close-modal" onclick="app.closeModals()">&times;</span>
-            
             <div class="slider-container">
                 <button class="slider-btn prev" onclick="app.prevImage()">‹</button>
                 <div class="slider-main">
-                    <img src="${product.images[0]?.url?.replace('s400', 's1200') || product.thumbnail}" 
-                         alt="${product.code}" id="mainProductImage">
+                    <img src="${product.images[0]?.url?.replace('s400', 's1200') || product.thumbnail}" alt="${product.code}" id="mainProductImage">
                 </div>
                 <button class="slider-btn next" onclick="app.nextImage()">›</button>
             </div>
-            
-            <div class="slider-counter">
-                <span id="currentIndex">1</span> / <span>${product.images.length}</span>
-            </div>
-            
+            <div class="slider-counter"><span id="currentIndex">1</span> / <span>${product.images.length}</span></div>
             <div class="slider-thumbs">
-                ${product.images.map((img, i) => `
-                    <img src="${img.url}" alt="صورة ${i+1}" 
-                         onclick="app.goToImage(${i})"
-                         class="thumb ${i === 0 ? 'active' : ''}">
-                `).join('')}
+                ${product.images.map((img, i) => `<img src="${img.url}" alt="صورة ${i+1}" onclick="app.goToImage(${i})" class="thumb ${i === 0 ? 'active' : ''}">`).join('')}
             </div>
-            
             <div class="product-meta">
                 <h2>${product.code}</h2>
                 <div class="meta-tags">
@@ -186,7 +175,6 @@
                 </div>
                 <button class="note-btn" onclick="app.openNoteForm('${product.code}', '${product.category}')">📝 إضافة ملاحظة</button>
             </div>
-            
             <div class="note-form" id="noteForm" style="display:none;">
                 <textarea id="noteText" placeholder="اكتب ملاحظتك هنا..." rows="3"></textarea>
                 <div class="note-actions">
@@ -195,7 +183,6 @@
                 </div>
             </div>
         `;
-        
         modal.style.display = 'flex';
     }
 
@@ -220,7 +207,6 @@
         const img = this.currentProduct.images[this.currentImageIndex];
         document.getElementById('mainProductImage').src = img.url?.replace('s400', 's1200') || img.url;
         document.getElementById('currentIndex').textContent = this.currentImageIndex + 1;
-        
         document.querySelectorAll('.slider-thumbs .thumb').forEach((t, i) => {
             t.classList.toggle('active', i === this.currentImageIndex);
         });
@@ -231,101 +217,305 @@
         const hCount = this.products.filter(p => p.orientation === 'H').length;
         const sCount = this.products.filter(p => p.orientation === 'S').length;
         const totalImages = this.products.reduce((sum, p) => sum + p.images.length, 0);
-        
+        const date = new Date().toLocaleDateString('ar-SA');
+        const time = new Date().toLocaleTimeString('ar-SA');
+
         const reportHTML = `
-            <!DOCTYPE html>
-            <html lang="ar" dir="rtl">
-            <head>
-                <meta charset="UTF-8">
-                <title>تقرير كانفس فريم</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 40px; background: #fff; color: #333; }
-                    .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }
-                    .header h1 { color: #d4af37; font-size: 2.5rem; margin-bottom: 10px; }
-                    .header p { color: #666; }
-                    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-                    .stat-box { background: #f9f9f9; border: 2px solid #d4af37; border-radius: 10px; padding: 25px; text-align: center; }
-                    .stat-box .number { font-size: 2.5rem; color: #d4af37; font-weight: bold; }
-                    .stat-box .label { color: #666; margin-top: 5px; }
-                    .section { margin-bottom: 30px; }
-                    .section h2 { color: #d4af37; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-                    .category-table { width: 100%; border-collapse: collapse; }
-                    .category-table th, .category-table td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #eee; }
-                    .category-table th { background: #f5f5f5; color: #333; font-weight: 600; }
-                    .category-table tr:hover { background: #fafafa; }
-                    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #999; }
-                    @media print { body { padding: 20px; } }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>📊 تقرير كانفس فريم</h1>
-                    <p>تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}</p>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="number">${this.products.length}</div>
-                        <div class="label">إجمالي اللوحات</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${totalImages}</div>
-                        <div class="label">إجمالي الصور</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${this.categories.length}</div>
-                        <div class="label">عدد الفئات</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${vCount}</div>
-                        <div class="label">لوحات عمودية</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${hCount}</div>
-                        <div class="label">لوحات أفقية</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${sCount}</div>
-                        <div class="label">لوحات مربعة</div>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <h2>📁 تفاصيل الفئات</h2>
-                    <table class="category-table">
-                        <thead>
-                            <tr>
-                                <th>الفئة</th>
-                                <th>عمودي (V)</th>
-                                <th>أفقي (H)</th>
-                                <th>مربع (S)</th>
-                                <th>الإجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.categories.map(cat => `
-                                <tr>
-                                    <td><strong>${cat.name}</strong></td>
-                                    <td>${cat.vCount || 0}</td>
-                                    <td>${cat.hCount || 0}</td>
-                                    <td>${cat.sCount || 0}</td>
-                                    <td><strong>${(cat.vCount || 0) + (cat.hCount || 0) + (cat.sCount || 0)}</strong></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="footer">
-                    <p>Canvas Frame - نظام إدارة اللوحات الفنية</p>
-                </div>
-                
-                <script>window.onload = () => window.print();</script>
-            </body>
-            </html>
-        `;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير كانفس فريم</title>
+    <style>
+        @page { size: A4; margin: 15mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+            background: #fff; 
+            color: #1a1a1a;
+            font-size: 12pt;
+        }
         
+        .report-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .report-header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            padding: 25px 30px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .report-header h1 {
+            font-size: 24pt;
+            font-weight: 700;
+            color: #d4af37;
+        }
+        
+        .report-header .date-info {
+            text-align: left;
+            font-size: 10pt;
+            color: #aaa;
+        }
+        
+        /* Stats Grid - Excel Style */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            border: 2px solid #1a1a1a;
+        }
+        
+        .stats-table td {
+            border: 1px solid #ccc;
+            padding: 15px 10px;
+            text-align: center;
+            width: 16.66%;
+        }
+        
+        .stats-table .stat-value {
+            font-size: 28pt;
+            font-weight: 700;
+            color: #d4af37;
+            display: block;
+        }
+        
+        .stats-table .stat-label {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        /* Section Title */
+        .section-title {
+            background: #1a1a1a;
+            color: #d4af37;
+            padding: 12px 20px;
+            font-size: 14pt;
+            font-weight: 600;
+            border-radius: 5px 5px 0 0;
+            margin-top: 20px;
+        }
+        
+        /* Data Table - Excel Style */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #1a1a1a;
+            margin-bottom: 25px;
+        }
+        
+        .data-table th {
+            background: #f5f5f5;
+            border: 1px solid #1a1a1a;
+            padding: 12px 8px;
+            font-weight: 600;
+            font-size: 10pt;
+            color: #1a1a1a;
+        }
+        
+        .data-table td {
+            border: 1px solid #ccc;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 10pt;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        
+        .data-table tr:hover {
+            background: #fff8e7;
+        }
+        
+        .data-table .category-name {
+            text-align: right;
+            font-weight: 600;
+            background: #f9f9f9;
+        }
+        
+        .data-table .total-row {
+            background: #1a1a1a !important;
+            color: #fff;
+            font-weight: 700;
+        }
+        
+        .data-table .total-row td {
+            border-color: #1a1a1a;
+            padding: 14px 8px;
+        }
+        
+        .data-table .gold {
+            color: #d4af37;
+        }
+        
+        /* Summary Box */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .summary-box {
+            border: 2px solid #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .summary-box.highlight {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        .summary-box .value {
+            font-size: 32pt;
+            font-weight: 700;
+            color: #d4af37;
+        }
+        
+        .summary-box .label {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .summary-box.highlight .label {
+            color: #aaa;
+        }
+        
+        /* Footer */
+        .report-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #1a1a1a;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9pt;
+            color: #666;
+        }
+        
+        /* Print */
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-container { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <div class="report-header">
+            <div>
+                <h1>📊 تقرير المخزون</h1>
+                <p style="color:#888; margin-top:5px;">Canvas Frame - كانفس فريم</p>
+            </div>
+            <div class="date-info">
+                <div>📅 ${date}</div>
+                <div>🕐 ${time}</div>
+            </div>
+        </div>
+        
+        <table class="stats-table">
+            <tr>
+                <td>
+                    <span class="stat-value">${this.products.length}</span>
+                    <span class="stat-label">إجمالي اللوحات</span>
+                </td>
+                <td>
+                    <span class="stat-value">${totalImages}</span>
+                    <span class="stat-label">إجمالي الصور</span>
+                </td>
+                <td>
+                    <span class="stat-value">${this.categories.length}</span>
+                    <span class="stat-label">عدد الفئات</span>
+                </td>
+                <td>
+                    <span class="stat-value">${vCount}</span>
+                    <span class="stat-label">عمودي V</span>
+                </td>
+                <td>
+                    <span class="stat-value">${hCount}</span>
+                    <span class="stat-label">أفقي H</span>
+                </td>
+                <td>
+                    <span class="stat-value">${sCount}</span>
+                    <span class="stat-label">مربع S</span>
+                </td>
+            </tr>
+        </table>
+        
+        <div class="section-title">📁 تفاصيل الفئات</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:5%">#</th>
+                    <th style="width:35%">اسم الفئة</th>
+                    <th style="width:15%">عمودي (V)</th>
+                    <th style="width:15%">أفقي (H)</th>
+                    <th style="width:15%">مربع (S)</th>
+                    <th style="width:15%">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${this.categories.map((cat, index) => {
+                    const total = (cat.vCount || 0) + (cat.hCount || 0) + (cat.sCount || 0);
+                    return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td class="category-name">${cat.name}</td>
+                        <td>${cat.vCount || 0}</td>
+                        <td>${cat.hCount || 0}</td>
+                        <td>${cat.sCount || 0}</td>
+                        <td><strong>${total}</strong></td>
+                    </tr>`;
+                }).join('')}
+                <tr class="total-row">
+                    <td colspan="2">الإجمالي الكلي</td>
+                    <td class="gold">${vCount}</td>
+                    <td class="gold">${hCount}</td>
+                    <td class="gold">${sCount}</td>
+                    <td class="gold">${this.products.length}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="section-title">📈 ملخص التوزيع</div>
+        <div class="summary-grid">
+            <div class="summary-box">
+                <div class="value">${Math.round(vCount / this.products.length * 100)}%</div>
+                <div class="label">نسبة اللوحات العمودية</div>
+            </div>
+            <div class="summary-box highlight">
+                <div class="value">${Math.round(totalImages / this.products.length * 10) / 10}</div>
+                <div class="label">متوسط الصور لكل لوحة</div>
+            </div>
+            <div class="summary-box">
+                <div class="value">${Math.round(hCount / this.products.length * 100)}%</div>
+                <div class="label">نسبة اللوحات الأفقية</div>
+            </div>
+        </div>
+        
+        <div class="report-footer">
+            <div>Canvas Frame - نظام إدارة اللوحات الفنية</div>
+            <div>تم إنشاء التقرير تلقائياً</div>
+        </div>
+    </div>
+    
+    <script>window.onload = () => window.print();</script>
+</body>
+</html>`;
+
         const printWindow = window.open('', '_blank');
         printWindow.document.write(reportHTML);
         printWindow.document.close();
@@ -343,7 +533,6 @@
     async sendNote(code, category) {
         const noteText = document.getElementById('noteText').value.trim();
         if (!noteText) { alert('اكتب ملاحظة أولاً'); return; }
-        
         const sent = await telegramService.sendNotification(code, noteText, category);
         if (sent) {
             alert('تم إرسال الملاحظة بنجاح! ✅');
