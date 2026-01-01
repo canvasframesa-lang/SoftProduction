@@ -27,8 +27,12 @@
     async loadData() {
         try {
             const data = await this.driveService.getAllProductsWithStats();
+            
+            // استخراج المنتجات من الـ response
             let files = [];
-            if (Array.isArray(data)) {
+            if (data && data.products) {
+                files = data.products;
+            } else if (Array.isArray(data)) {
                 files = data;
             } else if (data && typeof data === 'object') {
                 files = Object.values(data).flat();
@@ -55,7 +59,7 @@
         files.forEach(file => {
             if (!file || !file.name) return;
             
-            const code = file.name.substring(0, 7);
+            const code = file.code || file.name.substring(0, 7);
             if (!groups[code]) {
                 groups[code] = {
                     code: code,
@@ -67,7 +71,7 @@
             groups[code].images.push({
                 id: file.id,
                 name: file.name,
-                number: parseInt(file.name.substring(7, 9)) || 1
+                number: file.imageNumber || parseInt(file.name.substring(7, 9)) || 1
             });
         });
         
