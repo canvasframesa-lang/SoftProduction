@@ -28,7 +28,6 @@
         try {
             const data = await this.driveService.getAllProductsWithStats();
             
-            // استخراج المنتجات من الـ response
             let files = [];
             if (data && data.products) {
                 files = data.products;
@@ -207,7 +206,8 @@
         return stars;
     }
 
-    setRating(code, rating) {
+    async setRating(code, rating) {
+        const oldRating = this.ratings[code] || 0;
         this.ratings[code] = rating;
         localStorage.setItem('productRatings', JSON.stringify(this.ratings));
         
@@ -216,6 +216,39 @@
             modalRating.innerHTML = this.renderStars(rating, code);
         }
         this.renderProducts();
+        
+        // إرسال إشعار Telegram
+        const product = this.products.find(p => p.code === code);
+        const category = product ? product.category : '';
+        const userName = localStorage.getItem('userName') || 'زائر';
+        const msg = '⭐ تقييم جديد\n\n' +
+                    '👤 المستخدم: ' + userName + '\n' +
+                    '🖼 اللوحة: ' + code + '\n' +
+                    '📁 الفئة: ' + category + '\n' +
+                    '⭐ التقييم: ' + '★'.repeat(rating) + '☆'.repeat(5-rating) + ' (' + rating + '/5)\n' +
+                    '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+        
+        await this.sendTelegram(msg);
+    }
+
+    async sendTelegram(message) {
+        try {
+            const token = CONFIG.TELEGRAM.BOT_TOKEN;
+            const chatId = CONFIG.TELEGRAM.CHAT_ID;
+            const url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+            
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            });
+        } catch (error) {
+            console.error('Telegram error:', error);
+        }
     }
 
     viewProduct(code) {
@@ -297,7 +330,17 @@
         });
     }
 
-    printReport() {
+    async printReport() {
+        // إرسال إشعار طباعة
+        const userName = localStorage.getItem('userName') || 'زائر';
+        const msg = '📄 طباعة تقرير\n\n' +
+                    '👤 المستخدم: ' + userName + '\n' +
+                    '📊 عدد اللوحات: ' + this.products.length + '\n' +
+                    '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+        
+        await this.sendTelegram(msg);
+        
+        // فتح التقرير
         const rw = window.open('', '_blank');
         const totalImages = this.products.reduce((sum, p) => sum + p.imageCount, 0);
         const vCount = this.products.filter(p => p.orientation === 'V').length;
@@ -325,7 +368,7 @@
             ratedRows += '<tr><td>' + code + '</td><td class="stars">' + '★'.repeat(rating) + '☆'.repeat(5-rating) + '</td></tr>';
         });
 
-        rw.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير المخزون</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#fff}.header{text-align:center;margin-bottom:30px;border-bottom:3px solid #d4af37;padding-bottom:20px}.header h1{color:#333;font-size:24px}.header p{color:#666;margin-top:5px}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ddd;padding:12px;text-align:center}th{background:#1a1a1a;color:#d4af37}.section-title{background:#d4af37;color:#000;padding:10px;margin:30px 0 10px;font-weight:bold}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.summary-box{border:2px solid #d4af37;padding:15px;text-align:center}.summary-box h3{font-size:28px;color:#d4af37}.summary-box p{color:#666;margin-top:5px}.stars{color:#d4af37}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><div class="header"><h1>تقرير مخزون اللوحات الفنية</h1><p>تاريخ التقرير: ' + new Date().toLocaleDateString('ar-SA') + '</p></div><div class="summary-grid"><div class="summary-box"><h3>' + this.products.length + '</h3><p>إجمالي اللوحات</p></div><div class="summary-box"><h3>' + totalImages + '</h3><p>إجمالي الصور</p></div><div class="summary-box"><h3>' + this.categories.length + '</h3><p>عدد الفئات</p></div><div class="summary-box"><h3>' + vCount + '</h3><p>لوحات عمودية</p></div><div class="summary-box"><h3>' + hCount + '</h3><p>لوحات أفقية</p></div><div class="summary-box"><h3>' + sCount + '</h3><p>لوحات مربعة</p></div></div><div class="section-title">تفاصيل الفئات</div><table><thead><tr><th>الفئة</th><th>عمودي V</th><th>أفقي H</th><th>مربع S</th><th>الإجمالي</th><th>عدد الصور</th></tr></thead><tbody>' + catRows + '</tbody></table>' + (topRated.length > 0 ? '<div class="section-title">أعلى اللوحات تقييماً</div><table><thead><tr><th>رمز اللوحة</th><th>التقييم</th></tr></thead><tbody>' + ratedRows + '</tbody></table>' : '') + '<script>window.onload=function(){window.print()}<\/script></body></html>');
+        rw.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير المخزون</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#fff}.header{text-align:center;margin-bottom:30px;border-bottom:3px solid #d4af37;padding-bottom:20px}.header img{height:80px;margin-bottom:10px;background:#fff;padding:10px;border-radius:8px}.header h1{color:#333;font-size:24px}.header p{color:#666;margin-top:5px}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ddd;padding:12px;text-align:center}th{background:#1a1a1a;color:#d4af37}.section-title{background:#d4af37;color:#000;padding:10px;margin:30px 0 10px;font-weight:bold}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.summary-box{border:2px solid #d4af37;padding:15px;text-align:center}.summary-box h3{font-size:28px;color:#d4af37}.summary-box p{color:#666;margin-top:5px}.stars{color:#d4af37}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><div class="header"><img src="https://canvasframesa-lang.github.io/SoftProduction/assets/logo.png" alt="Logo"><h1>تقرير مخزون اللوحات الفنية</h1><p>تاريخ التقرير: ' + new Date().toLocaleDateString('ar-SA') + '</p></div><div class="summary-grid"><div class="summary-box"><h3>' + this.products.length + '</h3><p>إجمالي اللوحات</p></div><div class="summary-box"><h3>' + totalImages + '</h3><p>إجمالي الصور</p></div><div class="summary-box"><h3>' + this.categories.length + '</h3><p>عدد الفئات</p></div><div class="summary-box"><h3>' + vCount + '</h3><p>لوحات عمودية</p></div><div class="summary-box"><h3>' + hCount + '</h3><p>لوحات أفقية</p></div><div class="summary-box"><h3>' + sCount + '</h3><p>لوحات مربعة</p></div></div><div class="section-title">تفاصيل الفئات</div><table><thead><tr><th>الفئة</th><th>عمودي V</th><th>أفقي H</th><th>مربع S</th><th>الإجمالي</th><th>عدد الصور</th></tr></thead><tbody>' + catRows + '</tbody></table>' + (topRated.length > 0 ? '<div class="section-title">أعلى اللوحات تقييماً</div><table><thead><tr><th>رمز اللوحة</th><th>التقييم</th></tr></thead><tbody>' + ratedRows + '</tbody></table>' : '') + '<script>window.onload=function(){window.print()}<\/script></body></html>');
         rw.document.close();
     }
 
@@ -351,8 +394,16 @@
             return;
         }
         
+        const userName = localStorage.getItem('userName') || 'زائر';
+        const msg = '📝 ملاحظة جديدة\n\n' +
+                    '👤 المستخدم: ' + userName + '\n' +
+                    '🖼 اللوحة: ' + code + '\n' +
+                    '📁 الفئة: ' + category + '\n' +
+                    '💬 الملاحظة: ' + note + '\n' +
+                    '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+        
         try {
-            await telegramService.sendNotification(code, note, category);
+            await this.sendTelegram(msg);
             alert('تم إرسال الملاحظة بنجاح!');
             this.closeNoteForm();
         } catch (error) {
