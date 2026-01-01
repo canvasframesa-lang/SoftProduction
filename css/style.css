@@ -875,3 +875,42 @@ body {
         font-size: 28px;
     }
 }
+
+/* Print Button Style */
+.print-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.print-btn:hover {
+    background: #fff;
+    color: #000;
+}
+
+.filters-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+.filters-section input,
+.filters-section select {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    min-width: 150px;
+}
