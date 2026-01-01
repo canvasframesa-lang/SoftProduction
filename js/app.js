@@ -161,7 +161,6 @@
                     <div class="thumbnails-row">
                         ${product.images.map((img, i) => `<img src="${img.url}" alt="صورة ${i+1}" onclick="app.changeImage('${img.url?.replace('s400', 's800')}')" class="thumb ${i === 0 ? 'active' : ''}">`).join('')}
                     </div>
-                    <a href="${product.images[0]?.fullUrl}" target="_blank" class="drive-btn">فتح في Drive</a>
                     <button class="note-btn" onclick="app.openNoteForm('${product.code}', '${product.category}')">📝 إضافة ملاحظة</button>
                 </div>
             </div>
