@@ -4,6 +4,8 @@
         this.filteredProducts = [];
         this.categories = [];
         this.driveService = new DriveService();
+        this.currentImageIndex = 0;
+        this.currentProduct = null;
     }
 
     async init() {
@@ -15,6 +17,14 @@
         document.getElementById('searchInput')?.addEventListener('input', (e) => this.handleSearch(e.target.value));
         document.getElementById('categoryFilter')?.addEventListener('change', () => this.applyFilters());
         document.getElementById('orientationFilter')?.addEventListener('change', () => this.applyFilters());
+        
+        document.addEventListener('keydown', (e) => {
+            if (this.currentProduct) {
+                if (e.key === 'ArrowLeft') this.nextImage();
+                if (e.key === 'ArrowRight') this.prevImage();
+                if (e.key === 'Escape') this.closeModals();
+            }
+        });
     }
 
     async loadData() {
@@ -66,11 +76,6 @@
             const total = (cat.vCount || 0) + (cat.hCount || 0) + (cat.sCount || 0);
             return `<div class="category-card" onclick="app.filterByCategory('${cat.name}')">
                 <h3>${cat.name}</h3>
-                <div class="category-stats">
-                    <span>V: ${cat.vCount || 0}</span>
-                    <span>H: ${cat.hCount || 0}</span>
-                    <span>S: ${cat.sCount || 0}</span>
-                </div>
                 <div class="category-total">${total} لوحة</div>
             </div>`;
         }).join('');
@@ -141,40 +146,86 @@
     viewProduct(code) {
         const product = this.products.find(p => p.code === code);
         if (!product) return;
+        
+        this.currentProduct = product;
+        this.currentImageIndex = 0;
+        
         const modal = document.getElementById('productModal');
         const content = document.getElementById('productModalContent');
+        
         content.innerHTML = `
             <span class="close-modal" onclick="app.closeModals()">&times;</span>
-            <div class="product-detail">
-                <div class="main-image">
-                    <img src="${product.images[0]?.url?.replace('s400', 's800') || product.thumbnail}" alt="${product.code}" id="mainProductImage">
+            
+            <div class="slider-container">
+                <button class="slider-btn prev" onclick="app.prevImage()">‹</button>
+                
+                <div class="slider-main">
+                    <img src="${product.images[0]?.url?.replace('s400', 's1200') || product.thumbnail}" 
+                         alt="${product.code}" id="mainProductImage">
                 </div>
-                <div class="product-info-panel">
-                    <h2>${product.code}</h2>
-                    <p><strong>الفئة:</strong> ${product.category}</p>
-                    <p><strong>الاتجاه:</strong> ${product.orientation === 'V' ? 'عمودي' : product.orientation === 'H' ? 'أفقي' : 'مربع'}</p>
-                    <p><strong>عدد الصور:</strong> ${product.images.length}</p>
-                    <div class="thumbnails-row">
-                        ${product.images.map((img, i) => `<img src="${img.url}" alt="صورة ${i+1}" onclick="app.changeImage('${img.url?.replace('s400', 's800')}')" class="thumb ${i === 0 ? 'active' : ''}">`).join('')}
-                    </div>
-                    <button class="note-btn" onclick="app.openNoteForm('${product.code}', '${product.category}')">📝 إضافة ملاحظة</button>
-                </div>
+                
+                <button class="slider-btn next" onclick="app.nextImage()">›</button>
             </div>
+            
+            <div class="slider-counter">
+                <span id="currentIndex">1</span> / <span>${product.images.length}</span>
+            </div>
+            
+            <div class="slider-thumbs">
+                ${product.images.map((img, i) => `
+                    <img src="${img.url}" alt="صورة ${i+1}" 
+                         onclick="app.goToImage(${i})"
+                         class="thumb ${i === 0 ? 'active' : ''}">
+                `).join('')}
+            </div>
+            
+            <div class="product-meta">
+                <h2>${product.code}</h2>
+                <div class="meta-tags">
+                    <span class="meta-tag">${product.category}</span>
+                    <span class="meta-tag">${product.orientation === 'V' ? 'عمودي' : product.orientation === 'H' ? 'أفقي' : 'مربع'}</span>
+                    <span class="meta-tag">${product.images.length} صور</span>
+                </div>
+                <button class="note-btn" onclick="app.openNoteForm('${product.code}', '${product.category}')">📝 إضافة ملاحظة</button>
+            </div>
+            
             <div class="note-form" id="noteForm" style="display:none;">
-                <h3>إضافة ملاحظة</h3>
                 <textarea id="noteText" placeholder="اكتب ملاحظتك هنا..." rows="3"></textarea>
-                <button onclick="app.sendNote('${product.code}', '${product.category}')">إرسال</button>
-                <button onclick="app.closeNoteForm()" class="cancel-btn">إلغاء</button>
+                <div class="note-actions">
+                    <button onclick="app.sendNote('${product.code}', '${product.category}')">إرسال</button>
+                    <button onclick="app.closeNoteForm()" class="cancel-btn">إلغاء</button>
+                </div>
             </div>
         `;
+        
         modal.style.display = 'flex';
     }
 
-    changeImage(url) {
-        const mainImg = document.getElementById('mainProductImage');
-        if (mainImg) mainImg.src = url;
-        document.querySelectorAll('.thumbnails-row .thumb').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
+    prevImage() {
+        if (!this.currentProduct) return;
+        this.currentImageIndex = (this.currentImageIndex - 1 + this.currentProduct.images.length) % this.currentProduct.images.length;
+        this.updateSlider();
+    }
+
+    nextImage() {
+        if (!this.currentProduct) return;
+        this.currentImageIndex = (this.currentImageIndex + 1) % this.currentProduct.images.length;
+        this.updateSlider();
+    }
+
+    goToImage(index) {
+        this.currentImageIndex = index;
+        this.updateSlider();
+    }
+
+    updateSlider() {
+        const img = this.currentProduct.images[this.currentImageIndex];
+        document.getElementById('mainProductImage').src = img.url?.replace('s400', 's1200') || img.url;
+        document.getElementById('currentIndex').textContent = this.currentImageIndex + 1;
+        
+        document.querySelectorAll('.slider-thumbs .thumb').forEach((t, i) => {
+            t.classList.toggle('active', i === this.currentImageIndex);
+        });
     }
 
     openNoteForm(code, category) {
@@ -201,6 +252,7 @@
 
     closeModals() {
         document.getElementById('productModal').style.display = 'none';
+        this.currentProduct = null;
     }
 }
 
