@@ -22,7 +22,18 @@
     async loadData() {
         try {
             const data = await this.driveService.getAllProductsWithStats();
-            this.products = this.groupProducts(data);
+            // تحويل البيانات إلى مصفوفة إذا كانت object
+            let files = [];
+            if (Array.isArray(data)) {
+                files = data;
+            } else if (data && typeof data === 'object') {
+                // إذا كان object، نجمع كل الملفات من المجلدات
+                files = Object.values(data).flat();
+            }
+            
+            console.log('Files loaded:', files.length);
+            
+            this.products = this.groupProducts(files);
             this.filteredProducts = [...this.products];
             this.categories = [...new Set(this.products.map(p => p.category))];
             this.updateStats();
@@ -35,14 +46,21 @@
     }
 
     groupProducts(files) {
+        if (!files || !Array.isArray(files)) {
+            console.error('Invalid files data');
+            return [];
+        }
+        
         const groups = {};
         files.forEach(file => {
+            if (!file || !file.name) return;
+            
             const code = file.name.substring(0, 7);
             if (!groups[code]) {
                 groups[code] = {
                     code,
-                    category: file.category,
-                    orientation: file.orientation,
+                    category: file.category || 'غير مصنف',
+                    orientation: file.orientation || 'V',
                     images: []
                 };
             }
@@ -188,7 +206,6 @@
         localStorage.setItem('productRatings', JSON.stringify(this.ratings));
         this.renderProducts();
         
-        // إذا المودال مفتوح، حدّث النجوم فيه
         const modalRating = document.querySelector('.modal-rating');
         if (modalRating) {
             modalRating.innerHTML = this.renderStars(rating, code, true);
@@ -297,7 +314,6 @@
             if (p.orientation === 'S') catStats[p.category].s++;
         });
 
-        // Top rated products
         const topRated = Object.entries(this.ratings)
             .filter(([code, rating]) => rating >= 4)
             .sort((a, b) => b[1] - a[1])
