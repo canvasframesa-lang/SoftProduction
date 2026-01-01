@@ -1,102 +1,96 @@
-﻿// ==========================================
-// خدمة Google Drive
-// ==========================================
-
-class DriveService {
+﻿class DriveService {
     constructor() {
-        this.isInitialized = false;
-        this.isSignedIn = false;
+        this.apiKey = CONFIG.GOOGLE.API_KEY;
+        this.folderId = CONFIG.GOOGLE.FOLDER_ID;
+        this.baseUrl = 'https://www.googleapis.com/drive/v3';
     }
 
-    async init() {
-        return new Promise((resolve, reject) => {
-            gapi.load('client:auth2', async () => {
-                try {
-                    await gapi.client.init({
-                        apiKey: CONFIG.GOOGLE.API_KEY,
-                        clientId: CONFIG.GOOGLE.CLIENT_ID,
-                        scope: CONFIG.GOOGLE.SCOPES,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                    });
-                    
-                    this.isInitialized = true;
-                    gapi.auth2.getAuthInstance().isSignedIn.listen(this.updateSignInStatus.bind(this));
-                    this.updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-                    resolve(true);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
-    }
+    async init() { return true; }
 
-    updateSignInStatus(isSignedIn) {
-        this.isSignedIn = isSignedIn;
-        document.dispatchEvent(new CustomEvent('authStateChanged', { detail: { isSignedIn } }));
-    }
-
-    async signIn() {
-        await gapi.auth2.getAuthInstance().signIn();
-    }
-
-    signOut() {
-        gapi.auth2.getAuthInstance().signOut();
-    }
-
-    async getGroups() {
-        const response = await gapi.client.drive.files.list({
-            q: `'${CONFIG.GOOGLE.FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-            fields: 'files(id, name)',
-            orderBy: 'name'
-        });
-        return response.result.files || [];
-    }
-
-    async getProducts(folderId, pageToken = null) {
-        const query = folderId 
-            ? `'${folderId}' in parents and trashed=false`
-            : `'${CONFIG.GOOGLE.FOLDER_ID}' in parents and trashed=false`;
+    async fetchAllFromDrive(folderId) {
+        let allFiles = [];
+        let pageToken = null;
+        
+        do {
+            const query = `'${folderId}' in parents and trashed=false`;
+            const fields = 'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink)';
+            let url = `${this.baseUrl}/files?q=${encodeURIComponent(query)}&fields=${fields}&key=${this.apiKey}&pageSize=1000`;
             
-        const response = await gapi.client.drive.files.list({
-            q: query,
-            fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, createdTime, modifiedTime, parents)',
-            pageSize: CONFIG.DISPLAY.PRODUCTS_PER_PAGE,
-            pageToken: pageToken,
-            orderBy: 'name'
-        });
+            if (pageToken) {
+                url += `&pageToken=${pageToken}`;
+            }
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('API Error');
+            const data = await response.json();
+            
+            allFiles = allFiles.concat(data.files || []);
+            pageToken = data.nextPageToken;
+            
+        } while (pageToken);
         
-        const files = response.result.files || [];
-        const products = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-        
-        return {
-            products,
-            nextPageToken: response.result.nextPageToken
-        };
+        return allFiles;
     }
 
-    async searchProducts(query) {
-        const response = await gapi.client.drive.files.list({
-            q: `'${CONFIG.GOOGLE.FOLDER_ID}' in parents and name contains '${query}' and trashed=false`,
-            fields: 'files(id, name, mimeType, thumbnailLink, webViewLink)',
-            pageSize: 50
-        });
-        return response.result.files || [];
+    async getCategories() {
+        const files = await this.fetchAllFromDrive(this.folderId);
+        return files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
     }
 
-    async getProductDetails(fileId) {
-        const response = await gapi.client.drive.files.get({
-            fileId: fileId,
-            fields: 'id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime, modifiedTime, size'
-        });
-        return response.result;
+    async getOrientationFolders(categoryId) {
+        const files = await this.fetchAllFromDrive(categoryId);
+        return files.filter(f => f.mimeType === 'application/vnd.google-apps.folder' && ['V','H','S'].includes(f.name));
     }
 
-    getThumbnailUrl(file) {
-        if (file.thumbnailLink) {
-            return file.thumbnailLink.replace(/=s\d+/, `=s${CONFIG.DISPLAY.THUMBNAIL_SIZE}`);
+    async getProductsFromFolder(folderId) {
+        const files = await this.fetchAllFromDrive(folderId);
+        return files.filter(f => f.mimeType.startsWith('image/'));
+    }
+
+    async getAllProductsWithStats() {
+        const categories = await this.getCategories();
+        const allProducts = [];
+        const categoryStats = [];
+
+        for (const category of categories) {
+            let vCount = 0, hCount = 0, sCount = 0;
+            const folders = await this.getOrientationFolders(category.id);
+            
+            for (const folder of folders) {
+                const products = await this.getProductsFromFolder(folder.id);
+                console.log(`${category.name}/${folder.name}: ${products.length} files`);
+                
+                products.forEach(file => {
+                    allProducts.push({
+                        id: file.id,
+                        name: file.name,
+                        code: this.extractProductCode(file.name),
+                        imageNumber: this.extractImageNumber(file.name),
+                        category: category.name,
+                        orientation: folder.name,
+                        thumbnail: `https://drive.google.com/thumbnail?id=${file.id}&sz=s400`,
+                        webViewLink: file.webViewLink
+                    });
+                    if (folder.name === 'V') vCount++;
+                    else if (folder.name === 'H') hCount++;
+                    else sCount++;
+                });
+            }
+            categoryStats.push({ id: category.id, name: category.name, vCount, hCount, sCount });
         }
-        return 'assets/placeholder.png';
+        
+        console.log(`Total: ${allProducts.length} products`);
+        return { products: allProducts, categories: categoryStats };
+    }
+
+    extractProductCode(fileName) {
+        const name = fileName.replace(/\.[^.]+$/, '');
+        return name.slice(0, -1);
+    }
+
+    extractImageNumber(fileName) {
+        const name = fileName.replace(/\.[^.]+$/, '');
+        const lastChar = name.slice(-1);
+        return parseInt(lastChar) || 1;
     }
 }
-
-const driveService = new DriveService();

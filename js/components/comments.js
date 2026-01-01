@@ -1,8 +1,4 @@
-﻿// ==========================================
-// مكون التعليقات
-// ==========================================
-
-class CommentsManager {
+﻿class CommentsManager {
     constructor() {
         this.currentProductId = null;
         this.unsubscribe = null;
@@ -10,46 +6,31 @@ class CommentsManager {
 
     open(productId) {
         this.currentProductId = productId;
-        const modal = document.getElementById('commentsModal');
-        modal.classList.add('active');
+        document.getElementById('commentsModal').classList.add('active');
         
         const savedName = localStorage.getItem('commentAuthor');
-        if (savedName) {
-            document.getElementById('commentAuthor').value = savedName;
-        }
+        if (savedName) document.getElementById('commentAuthor').value = savedName;
         
         this.loadComments();
     }
 
     close() {
-        const modal = document.getElementById('commentsModal');
-        modal.classList.remove('active');
-        
-        if (this.unsubscribe) {
-            this.unsubscribe();
-            this.unsubscribe = null;
-        }
+        document.getElementById('commentsModal').classList.remove('active');
+        if (this.unsubscribe) { this.unsubscribe(); this.unsubscribe = null; }
         this.currentProductId = null;
     }
 
     loadComments() {
-        const listEl = document.getElementById('commentsList');
-        listEl.innerHTML = '<div class="loading-placeholder"><div class="loading-spinner"></div></div>';
-        
-        this.unsubscribe = firebaseService.subscribeToComments(
-            this.currentProductId,
-            (comments) => this.renderComments(comments)
-        );
+        document.getElementById('commentsList').innerHTML = '<div class="loading-placeholder"><div class="loading-spinner"></div></div>';
+        this.unsubscribe = firebaseService.subscribeToComments(this.currentProductId, (comments) => this.renderComments(comments));
     }
 
     renderComments(comments) {
         const listEl = document.getElementById('commentsList');
-        
         if (comments.length === 0) {
-            listEl.innerHTML = '<div class="no-comments"><p>لا توجد تعليقات بعد</p><p>كن أول من يعلق!</p></div>';
+            listEl.innerHTML = '<div class="no-comments"><p>لا توجد تعليقات بعد</p></div>';
             return;
         }
-        
         listEl.innerHTML = comments.map(c => `
             <div class="comment-item">
                 <div class="comment-header">
@@ -63,28 +44,25 @@ class CommentsManager {
 
     async submit(event) {
         event.preventDefault();
-        
         const authorInput = document.getElementById('commentAuthor');
         const textInput = document.getElementById('commentText');
         const btn = event.target.querySelector('button');
         
-        const authorName = authorInput.value.trim();
-        const text = textInput.value.trim();
-        
-        if (!authorName || !text) return;
+        if (!authorInput.value.trim() || !textInput.value.trim()) return;
         
         btn.disabled = true;
         btn.textContent = 'جاري الإرسال...';
         
         try {
-            await firebaseService.addComment(this.currentProductId, { authorName, text });
+            await firebaseService.addComment(this.currentProductId, {
+                authorName: authorInput.value.trim(),
+                text: textInput.value.trim()
+            });
+            localStorage.setItem('commentAuthor', authorInput.value.trim());
             textInput.value = '';
-            localStorage.setItem('commentAuthor', authorName);
-            
-            // تحديث العداد
             this.updateCount(this.currentProductId);
         } catch (error) {
-            alert('حدث خطأ في إرسال التعليق');
+            alert('حدث خطأ');
         } finally {
             btn.disabled = false;
             btn.textContent = 'إرسال';
@@ -93,19 +71,16 @@ class CommentsManager {
 
     async updateCount(productId) {
         const count = await firebaseService.getCommentsCount(productId);
-        const el = document.getElementById(`count-${productId}`);
+        const el = document.getElementById('count-' + productId);
         if (el) el.textContent = count;
     }
 
     formatDate(date) {
         if (!date) return '';
-        const now = new Date();
-        const diff = now - date;
-        
+        const diff = new Date() - date;
         if (diff < 60000) return 'الآن';
-        if (diff < 3600000) return `منذ ${Math.floor(diff/60000)} دقيقة`;
-        if (diff < 86400000) return `منذ ${Math.floor(diff/3600000)} ساعة`;
-        
+        if (diff < 3600000) return 'منذ ' + Math.floor(diff/60000) + ' دقيقة';
+        if (diff < 86400000) return 'منذ ' + Math.floor(diff/3600000) + ' ساعة';
         return date.toLocaleDateString('ar-EG');
     }
 

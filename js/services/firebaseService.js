@@ -1,8 +1,4 @@
-﻿// ==========================================
-// خدمة Firebase
-// ==========================================
-
-class FirebaseService {
+﻿class FirebaseService {
     constructor() {
         this.db = null;
         this.isInitialized = false;
@@ -14,7 +10,6 @@ class FirebaseService {
         }
         this.db = firebase.firestore();
         this.isInitialized = true;
-        console.log('Firebase initialized');
     }
 
     async addComment(productId, comment) {
@@ -24,7 +19,6 @@ class FirebaseService {
             text: comment.text,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
         const docRef = await this.db.collection('comments').add(data);
         return { id: docRef.id, ...data, createdAt: new Date() };
     }
