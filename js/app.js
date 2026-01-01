@@ -207,7 +207,6 @@
     }
 
     async setRating(code, rating) {
-        const oldRating = this.ratings[code] || 0;
         this.ratings[code] = rating;
         localStorage.setItem('productRatings', JSON.stringify(this.ratings));
         
@@ -217,7 +216,6 @@
         }
         this.renderProducts();
         
-        // إرسال إشعار Telegram
         const product = this.products.find(p => p.code === code);
         const category = product ? product.category : '';
         const userName = localStorage.getItem('userName') || 'زائر';
@@ -228,27 +226,24 @@
                     '⭐ التقييم: ' + '★'.repeat(rating) + '☆'.repeat(5-rating) + ' (' + rating + '/5)\n' +
                     '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
         
-        await this.sendTelegram(msg);
+        this.sendTelegram(msg);
     }
 
-    async sendTelegram(message) {
-        try {
-            const token = CONFIG.TELEGRAM.BOT_TOKEN;
-            const chatId = CONFIG.TELEGRAM.CHAT_ID;
-            const url = 'https://api.telegram.org/bot' + token + '/sendMessage';
-            
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: message,
-                    parse_mode: 'HTML'
-                })
-            });
-        } catch (error) {
-            console.error('Telegram error:', error);
-        }
+    sendTelegram(message) {
+        const token = CONFIG.TELEGRAM.BOT_TOKEN;
+        const chatId = CONFIG.TELEGRAM.CHAT_ID;
+        const url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message
+            })
+        }).catch(function(err) {
+            console.error('Telegram error:', err);
+        });
     }
 
     viewProduct(code) {
@@ -330,25 +325,23 @@
         });
     }
 
-    async printReport() {
-        // إرسال إشعار طباعة
-        const userName = localStorage.getItem('userName') || 'زائر';
-        const msg = '📄 طباعة تقرير\n\n' +
-                    '👤 المستخدم: ' + userName + '\n' +
-                    '📊 عدد اللوحات: ' + this.products.length + '\n' +
-                    '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+    printReport() {
+        var self = this;
+        var userName = localStorage.getItem('userName') || 'زائر';
+        var msg = '📄 طباعة تقرير\n\n' +
+                  '👤 المستخدم: ' + userName + '\n' +
+                  '📊 عدد اللوحات: ' + self.products.length + '\n' +
+                  '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
         
-        await this.sendTelegram(msg);
+        self.sendTelegram(msg);
         
-        // فتح التقرير
-        const rw = window.open('', '_blank');
-        const totalImages = this.products.reduce((sum, p) => sum + p.imageCount, 0);
-        const vCount = this.products.filter(p => p.orientation === 'V').length;
-        const hCount = this.products.filter(p => p.orientation === 'H').length;
-        const sCount = this.products.filter(p => p.orientation === 'S').length;
+        var totalImages = self.products.reduce(function(sum, p) { return sum + p.imageCount; }, 0);
+        var vCount = self.products.filter(function(p) { return p.orientation === 'V'; }).length;
+        var hCount = self.products.filter(function(p) { return p.orientation === 'H'; }).length;
+        var sCount = self.products.filter(function(p) { return p.orientation === 'S'; }).length;
 
-        const catStats = {};
-        this.products.forEach(p => {
+        var catStats = {};
+        self.products.forEach(function(p) {
             if (!catStats[p.category]) catStats[p.category] = { total: 0, v: 0, h: 0, s: 0, images: 0 };
             catStats[p.category].total++;
             catStats[p.category].images += p.imageCount;
@@ -357,65 +350,126 @@
             if (p.orientation === 'S') catStats[p.category].s++;
         });
 
-        let catRows = '';
-        for (const [cat, s] of Object.entries(catStats)) {
+        var catRows = '';
+        for (var cat in catStats) {
+            var s = catStats[cat];
             catRows += '<tr><td>' + cat + '</td><td>' + s.v + '</td><td>' + s.h + '</td><td>' + s.s + '</td><td>' + s.total + '</td><td>' + s.images + '</td></tr>';
         }
 
-        const topRated = Object.entries(this.ratings).filter(([c, r]) => r >= 4).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        let ratedRows = '';
-        topRated.forEach(([code, rating]) => {
-            ratedRows += '<tr><td>' + code + '</td><td class="stars">' + '★'.repeat(rating) + '☆'.repeat(5-rating) + '</td></tr>';
+        var topRated = [];
+        for (var code in self.ratings) {
+            if (self.ratings[code] >= 4) {
+                topRated.push([code, self.ratings[code]]);
+            }
+        }
+        topRated.sort(function(a, b) { return b[1] - a[1]; });
+        topRated = topRated.slice(0, 10);
+        
+        var ratedRows = '';
+        topRated.forEach(function(item) {
+            var code = item[0];
+            var rating = item[1];
+            var stars = '';
+            for (var i = 0; i < rating; i++) stars += '★';
+            for (var j = rating; j < 5; j++) stars += '☆';
+            ratedRows += '<tr><td>' + code + '</td><td class="stars">' + stars + '</td></tr>';
         });
 
-        rw.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير المخزون</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;background:#fff}.header{text-align:center;margin-bottom:30px;border-bottom:3px solid #d4af37;padding-bottom:20px}.header img{height:80px;margin-bottom:10px;background:#fff;padding:10px;border-radius:8px}.header h1{color:#333;font-size:24px}.header p{color:#666;margin-top:5px}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ddd;padding:12px;text-align:center}th{background:#1a1a1a;color:#d4af37}.section-title{background:#d4af37;color:#000;padding:10px;margin:30px 0 10px;font-weight:bold}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}.summary-box{border:2px solid #d4af37;padding:15px;text-align:center}.summary-box h3{font-size:28px;color:#d4af37}.summary-box p{color:#666;margin-top:5px}.stars{color:#d4af37}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><div class="header"><img src="https://canvasframesa-lang.github.io/SoftProduction/assets/logo.png" alt="Logo"><h1>تقرير مخزون اللوحات الفنية</h1><p>تاريخ التقرير: ' + new Date().toLocaleDateString('ar-SA') + '</p></div><div class="summary-grid"><div class="summary-box"><h3>' + this.products.length + '</h3><p>إجمالي اللوحات</p></div><div class="summary-box"><h3>' + totalImages + '</h3><p>إجمالي الصور</p></div><div class="summary-box"><h3>' + this.categories.length + '</h3><p>عدد الفئات</p></div><div class="summary-box"><h3>' + vCount + '</h3><p>لوحات عمودية</p></div><div class="summary-box"><h3>' + hCount + '</h3><p>لوحات أفقية</p></div><div class="summary-box"><h3>' + sCount + '</h3><p>لوحات مربعة</p></div></div><div class="section-title">تفاصيل الفئات</div><table><thead><tr><th>الفئة</th><th>عمودي V</th><th>أفقي H</th><th>مربع S</th><th>الإجمالي</th><th>عدد الصور</th></tr></thead><tbody>' + catRows + '</tbody></table>' + (topRated.length > 0 ? '<div class="section-title">أعلى اللوحات تقييماً</div><table><thead><tr><th>رمز اللوحة</th><th>التقييم</th></tr></thead><tbody>' + ratedRows + '</tbody></table>' : '') + '<script>window.onload=function(){window.print()}<\/script></body></html>');
+        var ratedSection = '';
+        if (topRated.length > 0) {
+            ratedSection = '<div class="section-title">أعلى اللوحات تقييماً</div><table><thead><tr><th>رمز اللوحة</th><th>التقييم</th></tr></thead><tbody>' + ratedRows + '</tbody></table>';
+        }
+
+        var reportHtml = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير المخزون</title>';
+        reportHtml += '<style>';
+        reportHtml += '*{margin:0;padding:0;box-sizing:border-box}';
+        reportHtml += 'body{font-family:Arial,sans-serif;padding:20px;background:#fff}';
+        reportHtml += '.header{text-align:center;margin-bottom:30px;border-bottom:3px solid #d4af37;padding-bottom:20px}';
+        reportHtml += '.header img{height:80px;margin-bottom:10px;background:#fff;padding:10px;border-radius:8px}';
+        reportHtml += '.header h1{color:#333;font-size:24px}';
+        reportHtml += '.header p{color:#666;margin-top:5px}';
+        reportHtml += 'table{width:100%;border-collapse:collapse;margin:20px 0}';
+        reportHtml += 'th,td{border:1px solid #ddd;padding:12px;text-align:center}';
+        reportHtml += 'th{background:#1a1a1a;color:#d4af37}';
+        reportHtml += '.section-title{background:#d4af37;color:#000;padding:10px;margin:30px 0 10px;font-weight:bold}';
+        reportHtml += '.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}';
+        reportHtml += '.summary-box{border:2px solid #d4af37;padding:15px;text-align:center}';
+        reportHtml += '.summary-box h3{font-size:28px;color:#d4af37}';
+        reportHtml += '.summary-box p{color:#666;margin-top:5px}';
+        reportHtml += '.stars{color:#d4af37}';
+        reportHtml += '@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}';
+        reportHtml += '</style></head><body>';
+        
+        reportHtml += '<div class="header">';
+        reportHtml += '<img src="https://canvasframesa-lang.github.io/SoftProduction/assets/logo.png" alt="Logo">';
+        reportHtml += '<h1>تقرير مخزون اللوحات الفنية</h1>';
+        reportHtml += '<p>تاريخ التقرير: ' + new Date().toLocaleDateString('ar-SA') + '</p>';
+        reportHtml += '</div>';
+        
+        reportHtml += '<div class="summary-grid">';
+        reportHtml += '<div class="summary-box"><h3>' + self.products.length + '</h3><p>إجمالي اللوحات</p></div>';
+        reportHtml += '<div class="summary-box"><h3>' + totalImages + '</h3><p>إجمالي الصور</p></div>';
+        reportHtml += '<div class="summary-box"><h3>' + self.categories.length + '</h3><p>عدد الفئات</p></div>';
+        reportHtml += '<div class="summary-box"><h3>' + vCount + '</h3><p>لوحات عمودية</p></div>';
+        reportHtml += '<div class="summary-box"><h3>' + hCount + '</h3><p>لوحات أفقية</p></div>';
+        reportHtml += '<div class="summary-box"><h3>' + sCount + '</h3><p>لوحات مربعة</p></div>';
+        reportHtml += '</div>';
+        
+        reportHtml += '<div class="section-title">تفاصيل الفئات</div>';
+        reportHtml += '<table><thead><tr><th>الفئة</th><th>عمودي V</th><th>أفقي H</th><th>مربع S</th><th>الإجمالي</th><th>عدد الصور</th></tr></thead>';
+        reportHtml += '<tbody>' + catRows + '</tbody></table>';
+        
+        reportHtml += ratedSection;
+        
+        reportHtml += '<script>window.onload=function(){window.print();}<\/script>';
+        reportHtml += '</body></html>';
+
+        var rw = window.open('', '_blank');
+        rw.document.write(reportHtml);
         rw.document.close();
     }
 
     openNoteForm() {
-        const form = document.getElementById('noteForm');
+        var form = document.getElementById('noteForm');
         if (form) form.classList.remove('hidden');
     }
 
     closeNoteForm() {
-        const form = document.getElementById('noteForm');
-        const text = document.getElementById('noteText');
+        var form = document.getElementById('noteForm');
+        var text = document.getElementById('noteText');
         if (form) form.classList.add('hidden');
         if (text) text.value = '';
     }
 
-    async sendNote(code, category) {
-        const noteEl = document.getElementById('noteText');
+    sendNote(code, category) {
+        var self = this;
+        var noteEl = document.getElementById('noteText');
         if (!noteEl) return;
         
-        const note = noteEl.value.trim();
+        var note = noteEl.value.trim();
         if (!note) {
             alert('اكتب ملاحظة أولاً');
             return;
         }
         
-        const userName = localStorage.getItem('userName') || 'زائر';
-        const msg = '📝 ملاحظة جديدة\n\n' +
-                    '👤 المستخدم: ' + userName + '\n' +
-                    '🖼 اللوحة: ' + code + '\n' +
-                    '📁 الفئة: ' + category + '\n' +
-                    '💬 الملاحظة: ' + note + '\n' +
-                    '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
+        var userName = localStorage.getItem('userName') || 'زائر';
+        var msg = '📝 ملاحظة جديدة\n\n' +
+                  '👤 المستخدم: ' + userName + '\n' +
+                  '🖼 اللوحة: ' + code + '\n' +
+                  '📁 الفئة: ' + category + '\n' +
+                  '💬 الملاحظة: ' + note + '\n' +
+                  '📅 الوقت: ' + new Date().toLocaleString('ar-SA');
         
-        try {
-            await this.sendTelegram(msg);
-            alert('تم إرسال الملاحظة بنجاح!');
-            this.closeNoteForm();
-        } catch (error) {
-            alert('فشل الإرسال: ' + error.message);
-        }
+        self.sendTelegram(msg);
+        alert('تم إرسال الملاحظة بنجاح!');
+        self.closeNoteForm();
     }
 
     closeModals() {
-        const modal = document.getElementById('productModal');
+        var modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('active');
     }
 }
 
-const app = new App();
+var app = new App();
 document.addEventListener('DOMContentLoaded', function() { app.init(); });
