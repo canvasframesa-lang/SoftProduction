@@ -14,24 +14,28 @@
     <div class="main-container">
         <section class="stats-section">
             <div class="stat-card clickable" onclick="app.showAll()">
-                <div class="stat-number" id="totalProducts">0</div>
-                <div class="stat-label">إجمالي اللوحات</div>
+                <span class="stat-number" id="totalProducts">0</span>
+                <span class="stat-label">إجمالي اللوحات</span>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalCategories">0</div>
-                <div class="stat-label">عدد الفئات</div>
+                <span class="stat-number" id="totalCategories">0</span>
+                <span class="stat-label">عدد الفئات</span>
             </div>
             <div class="stat-card clickable" onclick="app.filterByOrientation('V')">
-                <div class="stat-number" id="verticalCount">0</div>
-                <div class="stat-label">لوحات عمودية</div>
+                <span class="stat-number" id="verticalCount">0</span>
+                <span class="stat-label">لوحات عمودية</span>
             </div>
             <div class="stat-card clickable" onclick="app.filterByOrientation('H')">
-                <div class="stat-number" id="horizontalCount">0</div>
-                <div class="stat-label">لوحات أفقية</div>
+                <span class="stat-number" id="horizontalCount">0</span>
+                <span class="stat-label">لوحات أفقية</span>
             </div>
             <div class="stat-card clickable" onclick="app.filterByOrientation('S')">
-                <div class="stat-number" id="squareCount">0</div>
-                <div class="stat-label">لوحات مربعة</div>
+                <span class="stat-number" id="squareCount">0</span>
+                <span class="stat-label">لوحات مربعة</span>
+            </div>
+            <div class="stat-card clickable print-card" onclick="app.printReport()">
+                <span class="stat-number">🖨️</span>
+                <span class="stat-label">طباعة تقرير</span>
             </div>
         </section>
 

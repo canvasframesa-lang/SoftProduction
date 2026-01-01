@@ -420,3 +420,17 @@ body {
     .categories-grid { grid-template-columns: repeat(2, 1fr); }
     .navbar .logo { height: 45px; }
 }
+
+/* Print Card */
+.print-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, #1a1a1a 100%) !important;
+}
+
+.print-card:hover {
+    background: linear-gradient(135deg, #1a1a1a 0%, #222 100%) !important;
+    border-color: var(--gold) !important;
+}
+
+.print-card .stat-number {
+    font-size: 1.5rem !important;
+}

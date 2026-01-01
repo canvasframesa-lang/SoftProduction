@@ -158,12 +158,10 @@
             
             <div class="slider-container">
                 <button class="slider-btn prev" onclick="app.prevImage()">‹</button>
-                
                 <div class="slider-main">
                     <img src="${product.images[0]?.url?.replace('s400', 's1200') || product.thumbnail}" 
                          alt="${product.code}" id="mainProductImage">
                 </div>
-                
                 <button class="slider-btn next" onclick="app.nextImage()">›</button>
             </div>
             
@@ -226,6 +224,111 @@
         document.querySelectorAll('.slider-thumbs .thumb').forEach((t, i) => {
             t.classList.toggle('active', i === this.currentImageIndex);
         });
+    }
+
+    printReport() {
+        const vCount = this.products.filter(p => p.orientation === 'V').length;
+        const hCount = this.products.filter(p => p.orientation === 'H').length;
+        const sCount = this.products.filter(p => p.orientation === 'S').length;
+        const totalImages = this.products.reduce((sum, p) => sum + p.images.length, 0);
+        
+        const reportHTML = `
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>تقرير كانفس فريم</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 40px; background: #fff; color: #333; }
+                    .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }
+                    .header h1 { color: #d4af37; font-size: 2.5rem; margin-bottom: 10px; }
+                    .header p { color: #666; }
+                    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+                    .stat-box { background: #f9f9f9; border: 2px solid #d4af37; border-radius: 10px; padding: 25px; text-align: center; }
+                    .stat-box .number { font-size: 2.5rem; color: #d4af37; font-weight: bold; }
+                    .stat-box .label { color: #666; margin-top: 5px; }
+                    .section { margin-bottom: 30px; }
+                    .section h2 { color: #d4af37; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+                    .category-table { width: 100%; border-collapse: collapse; }
+                    .category-table th, .category-table td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #eee; }
+                    .category-table th { background: #f5f5f5; color: #333; font-weight: 600; }
+                    .category-table tr:hover { background: #fafafa; }
+                    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #999; }
+                    @media print { body { padding: 20px; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>📊 تقرير كانفس فريم</h1>
+                    <p>تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="number">${this.products.length}</div>
+                        <div class="label">إجمالي اللوحات</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number">${totalImages}</div>
+                        <div class="label">إجمالي الصور</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number">${this.categories.length}</div>
+                        <div class="label">عدد الفئات</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number">${vCount}</div>
+                        <div class="label">لوحات عمودية</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number">${hCount}</div>
+                        <div class="label">لوحات أفقية</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number">${sCount}</div>
+                        <div class="label">لوحات مربعة</div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>📁 تفاصيل الفئات</h2>
+                    <table class="category-table">
+                        <thead>
+                            <tr>
+                                <th>الفئة</th>
+                                <th>عمودي (V)</th>
+                                <th>أفقي (H)</th>
+                                <th>مربع (S)</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.categories.map(cat => `
+                                <tr>
+                                    <td><strong>${cat.name}</strong></td>
+                                    <td>${cat.vCount || 0}</td>
+                                    <td>${cat.hCount || 0}</td>
+                                    <td>${cat.sCount || 0}</td>
+                                    <td><strong>${(cat.vCount || 0) + (cat.hCount || 0) + (cat.sCount || 0)}</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="footer">
+                    <p>Canvas Frame - نظام إدارة اللوحات الفنية</p>
+                </div>
+                
+                <script>window.onload = () => window.print();</script>
+            </body>
+            </html>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(reportHTML);
+        printWindow.document.close();
     }
 
     openNoteForm(code, category) {
